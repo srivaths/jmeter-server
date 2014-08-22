@@ -1,27 +1,32 @@
-FROM fedora
+#
+# Dockerfile to create a jmeter-server image.
+# 
+# Usage:
+#  docker run -d \         
+#             -p 0.0.0.0:port-on-host:1099 \
+#             -p 0.0.0.0:some-other-port-on-host:60000 \
+#             -v /some/local/path:/logs \
+#             -v /some/other/local/path:/input-data \
+#             ssankara/jmeter-server
+#
+# TODO - Parameterize jmeter version in the ENTRYPOINT.
+#        Don't know how at the moment.  Cannot seem to use $VAR.  It is not converted; probably
+#        because it is in a quoted string.
+#
+# TODO - Currently exposed ports are hard-coded to use values that are in the jmeter.properties.
+#        It would be nice to be able to parameterize the port numbers.
+#
+FROM ssankara/jmeter-base
 MAINTAINER Sri Sankaran sri@redhat.com
-
-# Describe the environment
-ENV JDK_VERSION 1.7.0
-ENV JMETER_VERSION 2.11
-
-# Install the JDK
-RUN yum install -y java-$JDK_VERSION-openjdk-devel.x86_64 && rm -rf /var/cache/yum
-
-# Install JMeter
-RUN cd /var/lib && \
-  curl http://psg.mtu.edu/pub/apache/jmeter/binaries/apache-jmeter-$JMETER_VERSION.tgz -o /var/lib/jmeter-$JMETER_VERSION.tgz && \
-  tar xf jmeter-$JMETER_VERSION.tgz && \
-  rm -f jmeter-$JMETER_VERSION.tgz
 
 ADD jmeter.properties /var/lib/apache-jmeter-$JMETER_VERSION/bin/
 
+# Expose access to logs & data files
 VOLUME [ "/logs" ]
+VOLUME [ "/input-data" ]
 
-# Expose jmeter-server's port
+# Expose jmeter-server's port (values dicated by those specified in jmeter.properties.
 EXPOSE 1099 60000
 
 # Run jmeter-server 
 ENTRYPOINT [ "/var/lib/apache-jmeter-2.11/bin/jmeter-server" ]
-
-CMD [ "--help" ]
